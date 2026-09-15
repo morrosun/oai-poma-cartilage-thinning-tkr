@@ -1,0 +1,39 @@
+# ---------------------------------------------------------------------------
+# Derived knee-level tables and fitted objects.
+# These are re-identifiable OAI records: the OAI data-use agreement prohibits
+# their redistribution, so they are never committed. Regenerate by running the
+# pipeline in the order documented in README.md.
+# ---------------------------------------------------------------------------
+data/
+out/
+fig/
+*.csv
+*.rds
+*.rdata
+*.RData
+*.npz
+*.parquet
+*.xlsx
+
+# Script transcripts written by data_prep/*.py
+data_prep/out/
+
+# ---------------------------------------------------------------------------
+# Session artefacts
+# ---------------------------------------------------------------------------
+.Rhistory
+.Rapp.history
+.Rproj.user/
+.Renviron
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# ---------------------------------------------------------------------------
+# OS artefacts
+# ---------------------------------------------------------------------------
+.DS_Store
+.AppleDouble
+._*
+Thumbs.db
+desktop.ini
