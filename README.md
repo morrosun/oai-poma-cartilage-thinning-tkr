@@ -156,8 +156,23 @@ Source imaging and clinical data are **not** redistributed here.
   derivatives, so only the code that consumes it is published here.
 
 This repository contains **code only**. To reproduce the reported numbers, obtain the source data
-under the agreements above and run the pipeline in the order given. Analysis code is archived at
-Zenodo — version-specific DOI: *to be inserted at submission*.
+under the agreements above and run the pipeline in the order given.
+
+---
+
+## Citation / 引用
+
+The analysis code is archived at Zenodo:
+
+| | |
+|---|---|
+| **Version-specific DOI — cite this one** | <https://doi.org/10.5281/zenodo.22771313> (`v1.0.0`) |
+| Concept DOI — always resolves to the latest version | <https://doi.org/10.5281/zenodo.22771312> |
+
+```
+Wang K. Cartilage thinning rate and knee replacement in the OAI POMA nested case-control:
+analysis code (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.22771313
+```
 
 ---
 
