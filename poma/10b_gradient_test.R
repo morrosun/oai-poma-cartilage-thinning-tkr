@@ -78,6 +78,8 @@ for (pr in pairs_to_test) {
   res1[[lab]] <- data.frame(contrast = lab, OR_medial = exp(b),
                             OR_medial_lo = exp(b - 1.96 * e), OR_medial_hi = exp(b + 1.96 * e),
                             OR_lateral = exp(s[2, 1]),
+                            OR_lateral_lo = exp(s[2, 1] - 1.96 * s[2, 3]),
+                            OR_lateral_hi = exp(s[2, 1] + 1.96 * s[2, 3]),
                             OR_ratio = exp(d), OR_ratio_lo = exp(d - 1.96 * sd_d),
                             OR_ratio_hi = exp(d + 1.96 * sd_d), p = 2 * pnorm(-abs(d / sd_d)))
 }
@@ -98,6 +100,8 @@ res1[["composite"]] <- data.frame(contrast = "composite medial vs lateral",
                                   OR_medial = exp(s[1, 1]), OR_medial_lo = exp(s[1, 1] - 1.96*s[1,3]),
                                   OR_medial_hi = exp(s[1, 1] + 1.96*s[1,3]),
                                   OR_lateral = exp(s[2, 1]),
+                                  OR_lateral_lo = exp(s[2, 1] - 1.96 * s[2, 3]),
+                                  OR_lateral_hi = exp(s[2, 1] + 1.96 * s[2, 3]),
                                   OR_ratio = exp(d), OR_ratio_lo = exp(d - 1.96*sd_d),
                                   OR_ratio_hi = exp(d + 1.96*sd_d),
                                   p = 2 * pnorm(-abs(d / sd_d)))

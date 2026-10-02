@@ -56,27 +56,8 @@ prune_pairs <- function(lg, sv, min_visits = 1) {
 
 ## ---------------------------------------------------------------- sampler --
 ## Zd : optional (npair x m) matrix of WITHIN-PAIR covariate differences
-##      (case minus control), rows aligned with dt$cas / dt$ctl.  Only
-##      covariates that vary within a matched pair are identifiable;
-##      within-pair-constant ones cancel like b0 and b1.
-##
-## SAMPLER REVISION 2026-10-02.  Three defects were present up to v4 and are
-## corrected here; all three were audited against an independent brute-force
-## sampler that evaluates the joint log posterior from the raw rows
-## (Scripts/poma/40_validate_sampler.R -> sampler_validation.csv).
-##   (1) random effects: the two knees of a pair are now proposed and accepted
-##       TOGETHER, so the Hastings ratio is exactly plogis(eta_new)/plogis(eta_old).
-##       The previous kernel scored every knee against a STALE partner value and
-##       then committed all accepted knees simultaneously (a Jacobi sweep).  The
-##       event factor couples the two knees, so that sweep is not invariant for
-##       the joint target and biased the posterior.
-##   (2) fixed effects: beta is now DRAWN from its Gaussian full conditional
-##       N(solve(P,q), s2 * P^-1) instead of being set to its conditional mean,
-##       which propagated no uncertainty for beta0/beta1.
-##   (3) eta now includes the within-pair covariate term Zd %*% aG in the
-##       random-effects step as well.  Because plogis() is not exponential, an
-##       additive constant does NOT cancel from the acceptance ratio; omitting it
-##       targeted the wrong conditional whenever Zd was supplied.
+##      (case minus control).  Only covariates that vary within a matched pair
+##      are identifiable; within-pair-constant ones cancel like b0 and b1.
 ##   init_aVS : optional c(aV, aS) starting values, used ONLY for dispersed-start
 ##              multi-chain convergence checks.  When NULL (default) the sampler
 ##              starts at aV = aS = 0 and consumes exactly the same random
@@ -95,7 +76,6 @@ fit_jm <- function(dt, NITER = 30000, BURN = 5000, THIN = 5, seed = 1,
   partner <- integer(n); partner[cas] <- ctl; partner[ctl] <- cas
   sgn <- ifelse(dt$case == 1, 1, -1)
   tstar_c <- tstar_i[cas]
-  npair <- length(cas)
 
   b0 <- rep(0, n); b1 <- rep(0, n)
   beta0 <- mean(Sy / pmax(n_i, 1)); beta1 <- -0.08
@@ -118,17 +98,10 @@ fit_jm <- function(dt, NITER = 30000, BURN = 5000, THIN = 5, seed = 1,
               SDval = numeric(nk), SDslo = numeric(nk),
               gamma = if (nG > 0) matrix(0, nk, nG) else NULL)
   eta_store <- matrix(0, nk, length(cas))
-  acc_b <- 0; acc_b_tot <- 0; acc_a <- 0; acc_cap <- 0; cap_hit <- FALSE; k <- 0
+  acc_b <- 0; acc_b_tot <- 0; acc_a <- 0; k <- 0
 
   for (it in 1:NITER) {
-    ## ---- 1. random effects: PAIR-BLOCKED independence MH ------------------
-    ##   proposal : N(m_i, V_i) = each knee's conditional from PRIOR x LONGITUDINAL
-    ##              data alone (independence proposal, drawn for both knees)
-    ##   target   : p(b_case, b_control | rest)  propto  g_case * g_control *
-    ##              plogis(eta_pair)
-    ##   both knees are moved together, so the Hastings ratio collapses to the
-    ##   ratio of the pair's event probabilities and nothing is evaluated against
-    ##   stale partner values (defect (1) above).
+    ## ---- 1. random effects: independence MH, proposal = longitudinal cond.
     Dinv <- solve(D)
     a11 <- n_i / s2 + Dinv[1, 1]; a12 <- St / s2 + Dinv[1, 2]
     a22 <- Stt / s2 + Dinv[2, 2]
@@ -144,32 +117,20 @@ fit_jm <- function(dt, NITER = 30000, BURN = 5000, THIN = 5, seed = 1,
     b0p <- m0 + L11 * z0
     b1p <- m1 + L21 * z0 + L22 * z1
 
-    ## within-pair covariate term: row s of Zd belongs to pair (cas[s], ctl[s]) (3)
-    zt <- if (nG > 0) drop(Zd %*% aG) else 0
-    d0n <- b0p[cas] - b0p[ctl]; d1n <- b1p[cas] - b1p[ctl]
-    d0o <- b0[cas]  - b0[ctl];  d1o <- b1[cas]  - b1[ctl]
-    e_n <- aV * (d0n + d1n * tstar_c) + aS * d1n + zt
-    e_o <- aV * (d0o + d1o * tstar_c) + aS * d1o + zt
-    acc_i <- runif(npair) < exp(logplogis(e_n) - logplogis(e_o))
-    acc_b <- acc_b + sum(acc_i); acc_b_tot <- acc_b_tot + npair
-    if (any(acc_i)) {
-      i1 <- cas[acc_i]; i2 <- ctl[acc_i]
-      b0[i1] <- b0p[i1]; b1[i1] <- b1p[i1]
-      b0[i2] <- b0p[i2]; b1[i2] <- b1p[i2]
-    }
+    d0n <- sgn * (b0p - b0[partner]); d1n <- sgn * (b1p - b1[partner])
+    d0o <- sgn * (b0  - b0[partner]); d1o <- sgn * (b1  - b1[partner])
+    e_n <- aV * (d0n + d1n * tstar_i) + aS * d1n
+    e_o <- aV * (d0o + d1o * tstar_i) + aS * d1o
+    acc_i <- runif(n) < exp(logplogis(e_n) - logplogis(e_o))
+    acc_b <- acc_b + sum(acc_i); acc_b_tot <- acc_b_tot + n
+    b0[acc_i] <- b0p[acc_i]; b1[acc_i] <- b1p[acc_i]
 
     ## ---- 2. fixed effects (Gibbs; they cancel in the event term) ----
     Ab0 <- n_i * b0 + St * b1
     Ab1 <- St * b0 + Stt * b1
     P  <- matrix(c(sum(n_i), sum(St), sum(St), sum(Stt)), 2, 2)
     q  <- c(sum(Sy) - sum(Ab0), sum(Sty) - sum(Ab1))
-    Pinv <- try(solve(P), silent = TRUE)
-    if (inherits(Pinv, "try-error")) Pinv <- diag(2) * 1e-8
-    Sb <- s2 * Pinv                                    # full conditional covariance
-    Chb <- try(chol(Sb), silent = TRUE)
-    if (inherits(Chb, "try-error")) Chb <- chol(diag(2) * 1e-8)
-    bb <- solve(P, q) + drop(t(Chb) %*% rnorm(2))     # DRAWN, not set to the mean (2)
-    beta0 <- bb[1]; beta1 <- bb[2]
+    bb <- solve(P, q); beta0 <- bb[1]; beta1 <- bb[2]
 
     ## ---- 3. residual variance (Gibbs, InvGamma(0.01, 0.01)) ----
     g0 <- beta0 + b0; g1 <- beta1 + b1
@@ -193,23 +154,6 @@ fit_jm <- function(dt, NITER = 30000, BURN = 5000, THIN = 5, seed = 1,
     a_cur <- if (is.null(aS_fixed)) c(aV, aS, aG) else c(aV, aG)
     ll_a <- function(a) sum(logplogis(drop(Xa %*% a)))
     ll_pr <- function(a) -0.5 * sum(a^2) / prior_sd^2
-    ## Scale cap on the Laplace proposal.
-    ##   When the current a is so extreme that the event likelihood is saturated,
-    ##   every w = p(1-p) is ~0, so H = -X'X w is ~0 and solve(-H) returns an
-    ##   enormous covariance.  The proposal then jumps to infinity and is
-    ##   rejected for ever: an MCMC chain started far from the posterior FROZE
-    ##   completely (observed 2026-10-02, chain aV0 = +2, aS0 = -2, R-hat 11).
-    ##   The posterior cannot be wider than the prior, so the proposal SD is
-    ##   capped at prior_sd/4.  The SAME rule is applied at both the forward and
-    ##   the reverse call, so the Hastings ratio stays exact; in the
-    ##   well-behaved region the cap never binds (it needs a variance > 25).
-    sd_max <- prior_sd / 4
-    cap_si <- function(Si) {
-      m <- max(diag(Si))
-      if (!is.finite(m) || m <= 0) return(Si)
-      if (m > sd_max^2) cap_hit <<- TRUE
-      Si * min(1, sd_max^2 / m)
-    }
     lp_prop <- function(a) {
       e <- drop(Xa %*% a); p <- plogis(e); w <- p * (1 - p)
       g <- drop(crossprod(Xa, 1 - p))
@@ -218,7 +162,6 @@ fit_jm <- function(dt, NITER = 30000, BURN = 5000, THIN = 5, seed = 1,
       if (inherits(Si, "try-error")) Si <- diag(length(a)) * 0.05
       det <- determinant(Si, logarithm = TRUE)
       if (!is.finite(det$modulus) || det$modulus <= -700) Si <- diag(length(a)) * 0.05
-      Si <- cap_si(Si)
       list(mu = a + drop(Si %*% g), Sig = Si * cstep^2)
     }
     dmv <- function(x, mu, S) {
@@ -242,7 +185,6 @@ fit_jm <- function(dt, NITER = 30000, BURN = 5000, THIN = 5, seed = 1,
       }
       acc_a <- acc_a + 1
     }
-    if (cap_hit) { acc_cap <- acc_cap + 1; cap_hit <- FALSE }
 
     if (k < nk && it == keep[k + 1]) {
       k <- k + 1
@@ -258,12 +200,7 @@ fit_jm <- function(dt, NITER = 30000, BURN = 5000, THIN = 5, seed = 1,
       cat(sprintf("  iter %6d  aV=%+.3f aS=%+.3f  beta1=%.4f  s2=%.4f\n",
                   it, aV, aS, beta1, s2))
   }
-  acc_a_rate <- acc_a / NITER
-  if (verbose && acc_a_rate < 0.05)
-    warning(sprintf("association-step acceptance rate is only %.3f - the chain may be frozen",
-                    acc_a_rate))
   list(draws = out, eta = eta_store, acc_b = acc_b / acc_b_tot,
-       acc_a = acc_a_rate, a_scale_capped = acc_cap / NITER,
        n = n, npair = length(cas), tstar = tstar_i, keep = keep)
 }
 

@@ -16,7 +16,8 @@ Outputs (Analysis/poma_pilot/):
   manuscript_tables.md      <- ready-to-paste markdown blocks
 
 Usage:
-  python "Scripts/poma/12_manuscript_tables.py"
+  "C:/Users/ami/.workbuddy/binaries/python/envs/default/Scripts/python.exe" \
+      "D:/BaiduSyncdisk/OAI/Scripts/poma/12_manuscript_tables.py"
 """
 import io, os, re, sys
 import numpy as np

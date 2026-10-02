@@ -70,6 +70,7 @@ cth_maps/      # companion trajectory / continuum analysis of the CTh-Maps relea
 | `07_probe_jmbayes2.R` | Records the off-the-shelf failure mode (`JMbayes2` → `chol(): decomposition failed`) |
 | `08_joint_model.R` | Stratified `JMbayes2` fit, retained as the comparator |
 | `jm_core.R` | Shared sampler: longitudinal submodel, within-pair conditional likelihood |
+| `jm_core_legacy_sampler.R` | **Deliberately retained pre-audit version of the sampler**, kept only so that the audit scripts (`40`, `41`, `43`) can run it side by side with `jm_core.R`. Do not use for new work — see *Sampler audit*. |
 | `09_joint_conditional.R` | The joint model under the within-pair conditional likelihood |
 | `10_jm_multimetric.R` | Compartment-by-compartment joint models for the six cartilage metrics |
 | `10b_gradient_test.R` | The three formal medial-to-lateral contrasts, computed on one posterior draw set |
@@ -80,8 +81,37 @@ cth_maps/      # companion trajectory / continuum analysis of the CTh-Maps relea
 | `28_lcmm_continuum_check.R` | The three tests that distinguish a subtype from a continuum tail |
 | `30_class_continuum_check.R` | The same three tests, refactored into a config-driven, dataset-agnostic engine (the transferable form) |
 | `33_verify_poma_equivalence.py` | Verifies that the generic engine reproduces the POMA-specific result exactly |
-| `22_cth_score_corroboration.R` | Cross-pipeline corroboration against an independent automatic severity score |
+| `22_cth_score_corroboration.R` | Cross-pipeline corroboration against an independent automatic severity score; the pre-index exposure is the primary analysis and the all-timepoint fit is the sensitivity analysis |
 | `12_manuscript_tables.py` | Derives the numeric bodies of Tables 1–4 from the fitted objects |
+| `32_mcmc_diagnostics.R` | Three dispersed-start chains: Gelman–Rubin diagnostic, cross-chain effective sample size, posterior correlation of the association parameters |
+| `33_prior_sensitivity.R` | Prior sensitivity of the association parameters and of the inverse-Wishart scale |
+| `34_supplementary_figures.R` | Study flow diagram and posterior-dependence figure |
+| `36_verify_v4_numbers.R` | Re-checks every number quoted in manuscript v4 against the stored result objects |
+| `40_validate_sampler.R` | Sampler validation against an exact one-dimensional quadrature reference and an independent from-scratch random-walk sampler, with and without within-pair covariates |
+| `41_realdata_sampler_comparison.R` | Both samplers on the real 191 pairs across four seeds |
+| `42_sampler_ablation.R` | Turns each sampler correction on and off separately at the real scale, attributing the change to a specific defect |
+| `43_isolate_defect1.R` | Exact reference for the random-effect step at the real scale (191 pairs, real visit times) — the decisive test |
+| `44_chain_diagnostics.R` | Effective sample size, autocorrelation time and Monte-Carlo error of the reported chain |
+| `45_verify_v5_numbers.R` | Re-checks every number quoted in manuscript v5 against the stored result objects |
+
+### Sampler audit / 采样器审计
+
+A code audit of the released sampler found three defects in `jm_core.R`: the random-effect update
+used a Jacobi sweep (each knee of a pair scoring its acceptance ratio against its partner's *old*
+value), the fixed effects were set to their conditional mean instead of being drawn, and the
+acceptance ratio omitted the within-pair covariate term. All three are corrected in the current
+`jm_core.R`; the pre-correction behaviour is preserved verbatim in `jm_core_legacy_sampler.R` so the
+audit is reproducible.
+
+The decisive evidence is `43_isolate_defect1.R`. At the real scale (191 pairs with their real visit
+times) the exact value of E[log plogis(η)] — the functional maximised by the association step — is
+**−0.550898**; the legacy Jacobi sweep returns −0.555256 (**z = −24.9** Monte-Carlo standard errors)
+while the corrected pair-block kernel returns −0.551112 (**z = −1.3**). `42_sampler_ablation.R` shows
+that the whole displacement of the estimates comes from the Jacobi sweep; the other two defects move
+nothing at this sample size.
+
+Twenty simulated pairs are **not** enough to see this — both kernels agree with the exact solution
+there. Any replication of this audit must use the real number of pairs.
 
 ### `simulation/` — known-truth simulation studies
 
