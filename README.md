@@ -93,6 +93,8 @@ cth_maps/      # companion trajectory / continuum analysis of the CTh-Maps relea
 | `43_isolate_defect1.R` | Exact reference for the random-effect step at the real scale (191 pairs, real visit times) — the decisive test |
 | `44_chain_diagnostics.R` | Effective sample size, autocorrelation time and Monte-Carlo error of the reported chain |
 | `45_verify_v5_numbers.R` | Re-checks every number quoted in manuscript v5 against the stored result objects |
+| `46_export_audit_values.R` | Writes the fitted-object read-outs that the CSV summaries do not carry (notably the within-pair adjusted credible intervals) so that an audit can close the loop against a stored artefact |
+| `47_verify_numbers_strict.py` | Assertion-based audit: recomputes every quoted value from the object on disk — including the interval inversions that orient Table 6 — and checks that the manuscript contains it, that the Supplementary Table S2 inventory matches the archive, and that the cited DOI points at the corrected code. Exits non-zero on any failure |
 
 ### Sampler audit / 采样器审计
 
