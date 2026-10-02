@@ -347,13 +347,31 @@ if remote:
         chk(sec, "compare against the local clone", False, "ERROR %s" % str(e)[:100])
 
 # ============================================================== 8. DOI -------
+# The cited archive must be the one that holds BOTH the corrected sampler and
+# the complete S2 inventory.  Superseded DOIs may appear, but only when they are
+# explicitly labelled as superseded -- a bare older DOI is how a reader ends up
+# reproducing the wrong numbers.
 sec = "DOI : points at the archive holding the corrected sampler"
-chk(sec, "version DOI 23111696 (v1.0.1)", has("10.5281/zenodo.23111696", sec, "v1.0.1 DOI"))
+CITE = "10.5281/zenodo.23111986"      # v1.0.2 -- corrected sampler + 46/47
+chk(sec, "cited version DOI is %s (v1.0.2)" % CITE, has(CITE, sec, "cited DOI"))
+chk(sec, "cited release is named as v1.0.2", has("release v1.0.2", sec, "release label"))
 chk(sec, "concept DOI 22771312 unchanged", has("10.5281/zenodo.22771312", sec, "concept DOI"))
-chk(sec, "v1.0.0 named only as superseded",
-    txt.count("10.5281/zenodo.22771313") == 1
-    and "superseded v1.0.0 archive" in txt,
-    "occurrences=%d" % txt.count("10.5281/zenodo.22771313"))
+for old, why in (("10.5281/zenodo.23111696", "v1.0.1 has the sampler but a pre-audit inventory"),
+                 ("10.5281/zenodo.22771313", "v1.0.0 has the uncorrected sampler")):
+    n = txt.count(old)
+    # A superseded DOI may legitimately appear more than once -- the version
+    # history keeps the v6 note that cites v1.0.1.  What must hold is that EVERY
+    # mention sits in a "supersede" context, so widen the window well beyond the
+    # sentence and look at the text around each occurrence.
+    labelled = True
+    where = []
+    for m in re.finditer(re.escape(old), txt):
+        w = txt[max(0, m.start() - 200):m.end() + 200]
+        ok = "supersed" in w.lower()
+        labelled &= ok
+        where.append("ok" if ok else "UNLABELLED")
+    chk(sec, "%s: every mention labelled superseded (%s)" % (old, why),
+        n >= 1 and labelled, "n=%d | %s" % (n, ",".join(where)))
 chk(sec, "GitHub repo URL", has("https://github.com/morrosun/oai-poma-cartilage-thinning-tkr", sec, "repo url"))
 
 # ================================================== 9. OAC hard metrics ------
