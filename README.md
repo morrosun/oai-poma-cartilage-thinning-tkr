@@ -198,13 +198,22 @@ The analysis code is archived at Zenodo:
 
 | | |
 |---|---|
-| **Version-specific DOI — cite this one** | <https://doi.org/10.5281/zenodo.22771313> (`v1.0.0`) |
+| **Version-specific DOI — cite this one** | <https://doi.org/10.5281/zenodo.23111986> (`v1.0.2`) |
 | Concept DOI — always resolves to the latest version | <https://doi.org/10.5281/zenodo.22771312> |
 
 ```
 Wang K. Cartilage thinning rate and knee replacement in the OAI POMA nested case-control:
-analysis code (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.22771313
+analysis code (v1.0.2). Zenodo. https://doi.org/10.5281/zenodo.23111986
 ```
+
+**Cite v1.0.2, not v1.0.0 or v1.0.1.** The reported estimates come from the corrected
+sampler:
+
+| Release | DOI | Status |
+|---|---|---|
+| v1.0.2 | [10.5281/zenodo.23111986](https://doi.org/10.5281/zenodo.23111986) | **cite this one** — corrected sampler plus the audit scripts that verify every quoted number |
+| v1.0.1 | [10.5281/zenodo.23111696](https://doi.org/10.5281/zenodo.23111696) | superseded — corrected sampler, but predates the two audit scripts, so it does not satisfy the full reproducibility inventory |
+| v1.0.0 | [10.5281/zenodo.22771313](https://doi.org/10.5281/zenodo.22771313) | superseded — **holds the uncorrected sampler and is not the source of the reported estimates** |
 
 ---
 
