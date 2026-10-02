@@ -330,7 +330,10 @@ if remote:
     # script that was committed but never pushed.  Hard-coding a file count would
     # break on every future version, so the two are compared instead.
     import subprocess
-    CLONE = "D:/BaiduSyncdisk/OAI/" + REPO
+    # the clone sits next to Scripts/ and Analysis/, i.e. two levels above BASE
+    CLONE = os.environ.get("CLONE_DIR",
+                           os.path.join(os.path.dirname(os.path.dirname(BASE)),
+                                        REPO.split("/")[-1]))
     try:
         loc = subprocess.run(["git", "ls-tree", "-r", "HEAD", "--name-only"],
                              cwd=CLONE, capture_output=True, text=True, timeout=60).stdout.split()
@@ -387,6 +390,7 @@ out.append("=" * 74)
 out.append("TOTAL %d checks : %d PASS, %d FAIL" % (len(results), npass, nfail))
 out.append("=" * 74)
 body = "\n".join(out)
-io.open(os.path.join(BASE, "_audit_strict.log"), "w", encoding="utf-8", newline="\n").write(body + "\n")
+io.open(os.path.join(BASE, "%s_audit_strict.log" % BASENAME), "w",
+         encoding="utf-8", newline="\n").write(body + "\n")
 print(body)
 sys.exit(1 if nfail else 0)
