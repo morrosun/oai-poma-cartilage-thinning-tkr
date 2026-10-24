@@ -238,7 +238,7 @@ sampler:
 | Release | DOI | Status |
 |---|---|---|
 | v1.0.3 | [10.5281/zenodo.23615677](https://doi.org/10.5281/zenodo.23615677) | **cite this one** — corrected sampler, the audit scripts that verify every quoted number, and the simulation and figure scripts behind Table S3A and Supplementary Figure S3 |
-| v1.0.2 | [10.5281/zenodo.23111986](https://doi.org/10.5281/zenodo.23111986) | superseded — corrected sampler and audit scripts, but its `simulation/12_sim_degeneracy.R` is the pre-correction implementation (Part A returns −1223.075, leading eigenvalue 0.08063), so it does not reproduce Table S3A |
+| v1.0.2 | [10.5281/zenodo.23111986](https://doi.org/10.5281/zenodo.23111986) | superseded — corrected sampler and audit scripts, but its `simulation/12_sim_degeneracy.R` is the pre-correction implementation and does not reproduce Table S3A; the superseded values are listed in the v1.0.3 release notes |
 | v1.0.1 | [10.5281/zenodo.23111696](https://doi.org/10.5281/zenodo.23111696) | superseded — corrected sampler, but predates the two audit scripts, so it does not satisfy the full reproducibility inventory |
 | v1.0.0 | [10.5281/zenodo.22771313](https://doi.org/10.5281/zenodo.22771313) | superseded — **holds the uncorrected sampler and is not the source of the reported estimates** |
 
