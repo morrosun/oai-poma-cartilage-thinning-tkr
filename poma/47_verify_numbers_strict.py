@@ -1521,6 +1521,26 @@ chk(sec, "the public script names the varied quantity as an additive term",
     and "ll_zero_common" in _rsim,
     "12_sim_degeneracy.R")
 
+# ---------------------------------------------------------------- v26 -----
+# Two prose-only replacements.  The negative class-4 mean is attached to the
+# thickness slope, whose own sign is negative, instead of to a quantity that the
+# paper defines as positive; and the two pipelines are no longer said to share
+# an estimand.
+sec = "v26 : sign of the class-4 mean and the two-pipeline comparison"
+chk(sec, "the class-4 mean is described as a thickness slope, not as thinning",
+    "having a mean thickness slope of \u22120.859 mm/yr" in txt
+    and "thinning at -0.859 mm/yr" not in txt
+    and "thinning at \u22120.859 mm/yr" not in txt,
+    "Section 3.4")
+chk(sec, "the class-4 prose uses the Table 4 column name for the same quantity",
+    "Mean thickness slope (mm/yr)" in txt
+    and "mean thickness slope of \u22120.859 mm/yr" in txt,
+    "Table 4 header")
+chk(sec, "the two pipelines are not said to agree on one estimand",
+    "with both approaches supporting the same direction of association" in txt
+    and "so the two paths agree" not in txt,
+    "Section 3.2")
+
 # ==================================================================== report ==
 out = []
 out.append("=" * 74)

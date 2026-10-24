@@ -59,22 +59,39 @@ gp <- ggplot() +
 ggsave(file.path(BASE, "fig_flow_design.png"), gp, width = 8.2, height = 8.8, dpi = 300)
 
 ## ================================================== Supplementary Fig S3 ==
-L <- read.csv(file.path(BASE, "poma_long.csv"))
-U <- read.csv(file.path(BASE, "poma_analysis_long.csv"))
-COVARS <- c("V00AGE", "female", "P01BMI", "V00XRKL", "WOMAC_pain")
-PRIM <- "cMFTC_ThCtAB_aMe"
-sub <- L[!is.na(L[[PRIM]]), ]
-lg  <- data.frame(unit = sub$unit, year = sub$years, y = sub[[PRIM]],
-                  newstrata = sub$newstrata, case = sub$case)
-sv  <- U[, c("unit", "newstrata", "case", "t_index_months", COVARS)]
-sv  <- sv[sv$unit %in% lg$unit, ]
-sv  <- sv[complete.cases(sv[, COVARS]), ]
-lg  <- lg[lg$unit %in% sv$unit, ]
-sv$t_idx <- sv$t_index_months / 12
-PP  <- prune_pairs(lg, sv, 2)
-dt  <- build(PP$lg, PP$sv)
-f   <- fit_jm(dt, NITER = 30000, BURN = 5000, THIN = 5, seed = 2026, verbose = FALSE)
-d   <- f$draws
+## v26 correction: this panel used to refit the joint model here
+## (fit_jm(..., seed = 2026) on a locally rebuilt data set).  That refit is a
+## second chain of the same model, whose 97.5% limit is 9.59, so the number
+## printed on the panel (1.63-9.59) did not match the value the manuscript
+## reports for the primary analysis (1.63-9.47, Table 2/Table 3).  The panel now
+## plots the saved primary fit -- component A of jmfit_cMFTC_ThCtAB_aMe.rds,
+## written by 10_jm_multimetric.R -- so the figure, its caption and Table 2
+## carry one and the same chain.  Nothing is refitted; the fallback keeps the
+## script runnable if the saved fit is absent, and says so in the log.
+fitfile <- file.path(BASE, "jmfit_cMFTC_ThCtAB_aMe.rds")
+if (file.exists(fitfile)) {
+  d <- readRDS(fitfile)$A$draws
+  cat("S3 : using the saved primary fit (jmfit_cMFTC_ThCtAB_aMe.rds, component A)\n")
+} else {
+  warning("saved primary fit absent: refitting here, so the plotted interval may ",
+          "differ from Table 3 in the last retained digit")
+  L <- read.csv(file.path(BASE, "poma_long.csv"))
+  U <- read.csv(file.path(BASE, "poma_analysis_long.csv"))
+  COVARS <- c("V00AGE", "female", "P01BMI", "V00XRKL", "WOMAC_pain")
+  PRIM <- "cMFTC_ThCtAB_aMe"
+  sub <- L[!is.na(L[[PRIM]]), ]
+  lg  <- data.frame(unit = sub$unit, year = sub$years, y = sub[[PRIM]],
+                    newstrata = sub$newstrata, case = sub$case)
+  sv  <- U[, c("unit", "newstrata", "case", "t_index_months", COVARS)]
+  sv  <- sv[sv$unit %in% lg$unit, ]
+  sv  <- sv[complete.cases(sv[, COVARS]), ]
+  lg  <- lg[lg$unit %in% sv$unit, ]
+  sv$t_idx <- sv$t_index_months / 12
+  PP  <- prune_pairs(lg, sv, 2)
+  dt  <- build(PP$lg, PP$sv)
+  f   <- fit_jm(dt, NITER = 30000, BURN = 5000, THIN = 5, seed = 2026, verbose = FALSE)
+  d   <- f$draws
+}
 rho <- cor(d$aV, d$aS)
 cat(sprintf("posterior correlation aV vs aS (this chain) = %.3f\n", rho))
 ## prefer the pooled value over the three dispersed chains when 32 has been run

@@ -320,7 +320,7 @@ if (is.null(mrel)) cat("  failed\n") else {
 })
 
 ## ------------------------------------------------------------- figure -----
-labv <- sprintf("Class %d\n%+.3f mm/yr | %.1f mm | %.0f%% KR", ord,
+labv <- sprintf("Class %d\n%+.3f mm/yr\n%.1f mm | %.0f%% KR", ord,
                 mslope[as.character(ord)], prof$baseline_mm, prof$pct_KR)
 knee$clf <- factor(knee$cl, levels = ord, labels = labv)
 dd <- merge(d[, c("unit", "t", "y")], knee[, c("unit", "clf")], by = "unit")
@@ -340,14 +340,20 @@ ggsave(file.path(BASE, "fig_lcmm_trajectories.png"), gp1, width = 11, height = 3
 bt <- data.frame(clf = levels(knee$clf), n = as.integer(table(knee$clf)),
                  pct = 100 * as.numeric(tapply(knee$case, knee$clf, mean)),
                  slope = mslope[as.character(ord)])
+## v26: keep the class order used everywhere else (slowest thinning first).
+## As a character column ggplot re-sorted it alphabetically -- Class 1, 2, 3, 4 --
+## which interleaved the reference class second and made the bars dip, so the
+## panel no longer showed the monotone rise its title states.
+bt$clf <- factor(bt$clf, levels = levels(knee$clf))
 gp2 <- ggplot(bt, aes(clf, pct)) +
   geom_col(fill = "#2E6DA4", width = .6) +
   geom_text(aes(label = sprintf("%.1f%% (n=%d)", pct, n)), vjust = -0.4, size = 3) +
   theme_bw(base_size = 10) + ylim(0, max(bt$pct) * 1.2) +
-  theme(axis.text.x = element_text(size = 8), panel.grid.minor = element_blank()) +
+  theme(axis.text.x = element_text(size = 7), panel.grid.minor = element_blank(),
+        plot.margin = margin(5, 6, 10, 5)) +
   labs(x = NULL, y = "% undergoing knee replacement",
        title = "Knee replacement rate rises monotonically with the class thinning rate")
-ggsave(file.path(BASE, "fig_lcmm_outcome.png"), gp2, width = 7, height = 3.4, dpi = 200)
+ggsave(file.path(BASE, "fig_lcmm_outcome.png"), gp2, width = 9.5, height = 3.9, dpi = 200)
 
 saveRDS(list(selection = sel, K = Kbest, model = mB, fits = fits, knee = knee,
              profile = prof, per_class = pc, mi = miout,
