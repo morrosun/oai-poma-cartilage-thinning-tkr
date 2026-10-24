@@ -142,15 +142,17 @@ evaluates the within-pair conditional event log-likelihood exactly as the fitted
 `Σ_s log plogis(η_s)` over the 191 pairs, with `η_s` the case-minus-control linear predictor
 `a_V·(level at t*) + a_S·(slope)` (the script fixes `a_V = 0`, so `η_s = −a_S·b1_s`). The
 longitudinal submodel is not part of this sum; the value is therefore not the likelihood of a
-fitted joint model, and only its invariance is used. Three baseline specifications are
-compared at the index visit — baseline value set to zero, an arbitrary per-stratum value, and two
-structurally different baseline functions of time that agree at that visit — and all three return
-the same sum to machine precision. The information matrix is computed for one association
-coefficient plus twelve stratum baselines, each written as a three-coefficient function of time
+fitted joint model, and only its invariance is used. Three specifications of the pair-shared
+additive event term `c_s` are compared at the index visit — set to zero, an arbitrary per-pair
+value, and two structurally different functions of time that agree at that visit — and all three
+return the same sum to machine precision. That term is the log baseline hazard only where the
+baseline hazard is positive, which is why the script and the table call it an additive term. The
+information matrix is computed for one association
+coefficient plus twelve such terms, each written as a three-coefficient function of time
 `(1, t, t²)` evaluated at the index visit; the association parameter is per mm/yr of thinning and
 multiplies the raw case-minus-control thinning-rate difference (not `η_s`, which already carries
 `a_S`), so the Hessian is evaluated at `a = a_S` and not at `a_S² × rate difference`. Every
-baseline direction is null, which is why 36 of the 37 eigenvalues are zero. Tolerance is
+direction of that term is null, which is why 36 of the 37 eigenvalues are zero. Tolerance is
 `1e-5 ×` the largest absolute eigenvalue and the largest excluded direction is printed. A
 machine-readable copy of the panel (`sim1a_invariance.csv`) is written to the script's output
 directory on each run; like the other result files it is not distributed here.

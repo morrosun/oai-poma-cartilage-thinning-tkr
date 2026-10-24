@@ -7,21 +7,27 @@
 #     t*, the risk set of the pair at t* is the pair itself, so the pair's
 #     contribution to the partial likelihood is
 #
-#         l_s = (g_s + eta_case) - log( exp(g_s + eta_case) + exp(g_s + eta_ctl) )
-#             = log plogis(eta_case - eta_ctl),     g_s = h_{0s}(t*)
+#         l_s = (c_s(t*) + eta_case) - log( exp(c_s(t*) + eta_case) + exp(c_s(t*) + eta_ctl) )
+#             = log plogis(eta_case - eta_ctl)
+#
+#     where c_s(t*) is the pair-shared ADDITIVE EVENT TERM.  In a
+#     proportional-hazards representation, and only where the baseline hazard is
+#     positive, c_s(t*) is the log baseline hazard at that visit; it is not a
+#     hazard itself, and the code adds it to the linear predictor and varies it
+#     over the whole real line.
 #
 #     with eta_i = aV * (thickness level at t*) + aS * (thinning rate) the
 #     within-pair linear predictor of the model that is actually fitted.
 #
-#     The stratum-specific baseline hazard h_{0s}(t) enters numerator and
+#     The pair-shared additive event term c_s(t*) enters numerator and
 #     denominator alike and cancels.  Hence the log-likelihood is exactly
-#     invariant to the value of the baseline at the index visit and the Fisher
-#     information with respect to it is the zero matrix.  The stratum-specific
-#     baseline cancels from this CONDITIONAL EVENT likelihood.  That does not
-#     establish its identifiability in a full joint-model likelihood, and it does
-#     not by itself explain the implementation-specific failures recorded in the
-#     software probe (see 07, 12b and Supplementary Table S3E).  Nothing here is
-#     a statement about the posterior of any particular implementation.
+#     invariant to its value and the Fisher information with respect to it is
+#     the zero matrix.  This cancellation holds in the CONDITIONAL EVENT
+#     likelihood only: it does not establish identifiability in a full
+#     joint-model likelihood, and it does not by itself explain the
+#     implementation-specific failures recorded in the software probe (see 07,
+#     12b and Supplementary Table S3E).  Nothing here is a statement about the
+#     posterior of any particular implementation.
 #
 #     v21 correction: this check previously multiplied aS (a coefficient per
 #     mm/yr of thinning) by the marker LEVEL at the index visit, giving |eta| up
@@ -38,6 +44,12 @@
 #     difference instead of aS * rate difference.  dltS is now the raw
 #     case-minus-control thinning-rate difference and a is the coefficient per
 #     mm/yr, so a = aS reproduces the generating predictor exactly.
+#
+#     v25 naming: the quantity varied in A1 is the pair-shared additive event
+#     term c_s(t*), not the baseline hazard.  It equals the log baseline hazard
+#     only in a proportional-hazards representation with a positive baseline,
+#     and the code varies it over the whole real line, so it is named for what
+#     it is in the likelihood.
 #
 #   Part B. Consequence for the paired contrast
 #     The same algebra shows what IS identified: only within-pair contrasts
@@ -70,12 +82,13 @@ LOG <- list()
 P <- function(...) { s <- sprintf(...); cat(s, "\n"); LOG[[length(LOG) + 1]] <<- s }
 
 ## =========================================================== Part A =========
-P("--- Part A : the stratum baseline hazard is EXACTLY unidentifiable ---")
+P("--- Part A : the pair-shared additive event term is EXACTLY unidentifiable ---")
 
 ## A1: numeric invariance check.  Draw a simulated data set, then evaluate the
-## pair-level log-likelihood at arbitrary stratum-specific baselines.  Within a
-## stratum both members are evaluated at the SAME index visit, so the baseline
-## value h_{0s}(t*) enters numerator and denominator alike and cancels.
+## pair-level log-likelihood at arbitrary values of the pair-shared additive
+## event term c_s(t*) -- the log baseline hazard where that hazard is positive.
+## Both members are evaluated at the SAME index visit, so c_s(t*) enters
+## numerator and denominator alike and cancels.
 ##
 ## The linear predictor is the one the fitted model actually has,
 ##   eta_i = aV * (level at t*) + aS * (thinning rate),
@@ -91,22 +104,22 @@ cs <- which(d1$case == 1); js <- which(d1$case == 0)
 stopifnot(length(cs) == length(js), length(cs) == length(unique(d0$pair)))
 eta_c <- aS * (-d1$b1[cs])                     # aV = 0 -> rate term only
 eta_j <- aS * (-d1$b1[js])
-pairll <- function(ec, ej, g)                  # g = h_{0s}(t*), one value/pair
-  (g + ec) - log(exp(g + ec) + exp(g + ej))
+pairll <- function(ec, ej, cc)                 # cc = c_s(t*), one value/pair
+  (cc + ec) - log(exp(cc + ec) + exp(cc + ej))
 set.seed(99)
-g_s <- rnorm(length(cs), 0, 3)                 # arbitrary per-stratum baseline value
+c_s <- rnorm(length(cs), 0, 3)                 # arbitrary per-pair additive term
 ll0 <- sum(pairll(eta_c, eta_j, rep(0, length(cs))))
-ll1 <- sum(pairll(eta_c, eta_j, g_s))
-## Third check: two structurally different baseline FUNCTIONS of time that agree
-## at the index visit.  Each is evaluated at t*, which is the only time the
+ll1 <- sum(pairll(eta_c, eta_j, c_s))
+## Third check: two structurally different FUNCTIONS of time for that term which
+## agree at the index visit.  Each is evaluated at t*, which is the only time the
 ## pair likelihood ever visits; f2 is deliberately not constant away from t*.
 ts <- d1$tstar[cs]
-f1 <- function(tt, ts) rep(0, length(tt))          # constant baseline
+f1 <- function(tt, ts) rep(0, length(tt))          # constant term
 f2 <- function(tt, ts) 2.5 * (tt - ts) / 12        # linear, zero exactly at t*
 ll2 <- sum(pairll(eta_c, eta_j, f2(ts, ts)))       # = f1(ts) = 0 at the visit
-P("  A1  log-likelihood, baseline h_{0s}(t*) = 0        : %.10f", ll0)
-P("  A1  log-likelihood, arbitrary h_{0s}(t*)        : %.10f", ll1)
-P("  A1  log-likelihood, functions agreeing at t*    : %.10f  (f1 %.10f / f2 %.10f)",
+P("  A1  log-likelihood, c_s(t*) = 0                   : %.10f", ll0)
+P("  A1  log-likelihood, arbitrary c_s(t*)           : %.10f", ll1)
+P("  A1  log-likelihood, two c_s functions agreeing  : %.10f  (f1 %.10f / f2 %.10f)",
   ll2, sum(pairll(eta_c, eta_j, f1(ts, ts))), ll2)
 P("  A1  f1 and f2 differ away from t*: f2(t*+6) = %.3f (first pair)",
   f2(ts[1] + 6, ts[1]))
@@ -122,7 +135,7 @@ stopifnot(abs(ll1 - ll0) < 1e-8, abs(ll2 - ll0) < 1e-8,
           all(plogis(eta_c - eta_j) > 0.001),
           abs(f2(ts[1] + 6, ts[1])) > 0.1)   # the two functions really differ
 
-## A2: Fisher information.  Each stratum baseline is a three-coefficient
+## A2: Fisher information.  Each pair-shared additive term is a three-coefficient
 ## function of time, evaluated at t*; ALL THREE coefficients enter the
 ## likelihood, so a null direction is produced by cancellation and not by a
 ## coefficient never being used.  Stack (a, gamma_1..gamma_S) and require every
@@ -139,11 +152,11 @@ rate  <- -d1$b1                                     # thinning rate, mm/yr
 dltS  <- (rate[cs] - rate[js])[seq_len(S)]           # raw within-pair difference
 stopifnot(max(abs(aS * dltS - (eta_c - eta_j)[seq_len(S)])) < 1e-10)
 tsS  <- d1$tstar[cs][seq_len(S)]                    # index visit of each stratum
-BAS  <- cbind(1, tsS / 12, (tsS / 12)^2)            # baseline basis in time
+BAS  <- cbind(1, tsS / 12, (tsS / 12)^2)            # time basis of that term
 mk_ll <- function(par) {
   a <- par[1]; g <- matrix(par[-1], nrow = S, ncol = K)
-  off <- as.vector(rowSums(g * BAS))                # h_{0s}(t*) for the stratum
-  sum((off + a * dltS) - log(exp(off + a * dltS) + exp(off)))
+  add <- as.vector(rowSums(g * BAS))                # c_s(t*) for that pair
+  sum((add + a * dltS) - log(exp(add + a * dltS) + exp(add)))
 }
 par0 <- c(aS, rep(0, S * K))
 H <- matrix(0, length(par0), length(par0))
@@ -168,8 +181,8 @@ P("  A2  largest null-direction |eigen|  : %.3e  (rounding level)", rnd)
 ## machine-readable copy of panel (A) for the number audit
 write.csv(data.frame(
   n_pairs            = length(cs),
-  ll_zero_baseline   = ll0,
-  ll_arbitrary       = ll1,
+  ll_zero_common     = ll0,
+  ll_arbitrary_common = ll1,
   ll_other_function  = ll2,
   abs_change         = max(abs(ll1 - ll0), abs(ll2 - ll0)),
   mean_per_pair      = ll0 / length(cs),

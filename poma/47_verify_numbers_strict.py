@@ -1317,7 +1317,7 @@ _sa = list(csv.DictReader(io.open(
     encoding="utf-8")))[0]
 # v22: the table carries six decimals; the ten-decimal value lives only in the
 # exported CSV, so the manuscript is checked against "%.6f" of that value.
-_ll = "%.6f" % fnum(_sa["ll_zero_baseline"])
+_ll = "%.6f" % fnum(_sa["ll_zero_common"])
 chk(sec, "panel A carries the re-exported log-likelihood three times",
     txt.count("\u2212" + _ll.lstrip("-")) == 3
     and fnum(_sa["abs_change"]) == 0.0,
@@ -1326,8 +1326,8 @@ chk(sec, "panel A no longer prints ten decimals from the export",
     "\u2212100.1874111326" not in txt
     and "| Absolute change across all three specifications | **0** at "
         "numerical precision" in txt,
-    "%.6f in the table, %s in the CSV" % (fnum(_sa["ll_zero_baseline"]),
-                                          _sa["ll_zero_baseline"]))
+    "%.6f in the table, %s in the CSV" % (fnum(_sa["ll_zero_common"]),
+                                          _sa["ll_zero_common"]))
 chk(sec, "the retired mis-scaled value is gone",
     "\u22121223" not in txt and "1223.07" not in txt,
     "aS x level predictor")
@@ -1415,8 +1415,8 @@ chk(sec, "an audit note records the old object, the new object and the scope",
 sec = "v23 : the public script and the manuscript describe the same check"
 chk(sec, "the panel is a sum over the 191 pairs of the model's predictor",
     "sums of 191 pair-level conditional event contributions" in txt
-    and "the baseline is a different function of time whose value at that "
-        "visit is the same" in txt,
+    and "it is a different function of time whose value at that visit is "
+        "the same" in txt,
     "shape varied in the third specification")
 chk(sec, "the information matrix is described as a three-coefficient baseline",
     "1 association + 12 strata \u00d7 3 basis coefficients" in txt,
@@ -1457,7 +1457,7 @@ chk(sec, "the note quotes the re-exported leading eigenvalue",
 chk(sec, "the script no longer claims an improper posterior for any implementation",
     "has an improper posterior" not in _rsim
     and "the precise reason off-the-shelf joint-model software fails" not in _rsim
-    and "does not establish its identifiability in a full joint-model likelihood"
+    and "does not establish identifiability in a full joint-model likelihood"
         in _rsim_flat
     and "statement about the posterior of any particular implementation"
         in _rsim_flat,
@@ -1468,6 +1468,58 @@ _readme = io.open(os.path.join(BASE, "..", "..",
 chk(sec, "the README carries the corrected leading eigenvalue",
     "0.08063" not in _readme and "leading eigenvalue of 0.0594" in _readme,
     "README status of main")
+
+# ============ v25 : the varied quantity is a common additive term, not a hazard
+sec = "v25 : Table S3A names the common additive event term"
+CS = "c\u209b"          # the term itself; the index visit is given in words
+chk(sec, "the three panel rows are conditional-event statements",
+    "| Conditional event log-likelihood, common additive term set to zero |"
+    in txt
+    and "| Conditional event log-likelihood, arbitrary common additive term |"
+        in txt
+    and "| Conditional event log-likelihood, two common-term functions agreeing "
+        "at the index visit |" in txt,
+    "row labels")
+chk(sec, "no panel row calls the varied quantity a baseline hazard",
+    "index-visit baseline hazard set to zero" not in txt
+    and "arbitrary positive value |" not in txt,
+    "terminology")
+chk(sec, "the note defines the term and gives its proportional-hazards reading",
+    "The check varied a pair-shared additive event term " + CS
+    + ", evaluated at the index visit" in txt
+    and "that term cancels from the conditional likelihood" in txt
+    and "in a proportional-hazards representation it corresponds to the log "
+        "baseline hazard where the baseline hazard is positive" in txt,
+    "c_s and log baseline hazard")
+chk(sec, "the note no longer names the varied term h_0s(t*)",
+    "h\u2080" not in txt and CS in txt
+    and "and only that common additive term varied" in txt,
+    "no h_0s left in the manuscript")
+chk(sec, "Section 3 uses the same name for the same object",
+    "*(i) Pair-shared additive event term.*" in txt
+    and "*(i) Stratum baseline hazard.*" not in txt,
+    "supplementary results (i)")
+chk(sec, "the sign correspondence between the simulation and the model is stated",
+    "The positive simulation coefficient is defined for thinning rate, i.e. the "
+    "negative thickness slope, and therefore corresponds to \u2212*a*_S in the "
+    "joint-model notation above." in txt,
+    "thinning rate = negative thickness slope")
+chk(sec, "the note still carries the rate-only special case and the eigenvalue",
+    "This check used the rate-only special case, with *a*_V = 0" in txt
+    and "against a leading eigenvalue of %s" % f(_sa["max_abs_eigen"], 3) in txt,
+    "0.059 from the CSV")
+chk(sec, "the competing-interests sentence points at the Funding statement",
+    "The funders listed in the Funding statement had no role" in txt
+    and "The funders named above had no role" not in txt,
+    "Competing interests")
+chk(sec, "Section 4.5 calls the 6.7 to 428 range a credible interval",
+    "its 95% credible interval (6.7 to 428) should not be over-read" in txt
+    and "its odds ratio (6.7 to 428)" not in txt,
+    "4.5 point 2")
+chk(sec, "the public script names the varied quantity as an additive term",
+    "c_s(t*)" in _rsim and "h_{0s}(t*)" not in _rsim
+    and "ll_zero_common" in _rsim,
+    "12_sim_degeneracy.R")
 
 # ==================================================================== report ==
 out = []
