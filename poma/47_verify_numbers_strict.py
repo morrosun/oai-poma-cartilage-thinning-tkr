@@ -1528,7 +1528,7 @@ chk(sec, "the public script names the varied quantity as an additive term",
 # an estimand.
 sec = "v26 : sign of the class-4 mean and the two-pipeline comparison"
 chk(sec, "the class-4 mean is described as a thickness slope, not as thinning",
-    "having a mean thickness slope of \u22120.859 mm/yr" in txt
+    "had a mean thickness slope of \u22120.859 mm/yr" in txt
     and "thinning at -0.859 mm/yr" not in txt
     and "thinning at \u22120.859 mm/yr" not in txt,
     "Section 3.4")
@@ -1540,6 +1540,33 @@ chk(sec, "the two pipelines are not said to agree on one estimand",
     "with both approaches supporting the same direction of association" in txt
     and "so the two paths agree" not in txt,
     "Section 3.2")
+
+# ---------------------------------------------------------------- v27 -----
+# One sentence-attribution fix.  The ordinal class trend is a property of the
+# four ordered classes, so it can no longer be attached to "the smallest class
+# ... having"; the paragraph also calls the reported percentage a proportion.
+sec = "v27 : the class trend is attributed to the ordered classes"
+chk(sec, "the smallest class carries only its own two attributes",
+    "The smallest class (n = 25, 6.4%) had a mean thickness slope of "
+    "\u22120.859 mm/yr and a KR proportion of 96.0%." in txt,
+    "Section 3.4")
+chk(sec, "the ordinal trend is stated across the four ordered classes",
+    "Across the four ordered classes, the OR per class step was 2.18 "
+    "(1.57 to 3.04; P = 3.9 \u00d7 10\u207b\u2076)." in txt
+    and "an ordinal trend of 2.18" not in txt,
+    "Section 3.4")
+chk(sec, "the three claims are in three separate sentences",
+    "showed increasing KR proportions (Figure 2, Table 4)." in txt
+    and "96.0%. Across the four ordered classes" in txt,
+    "Section 3.4")
+chk(sec, "this paragraph reports a proportion, not a rate",
+    "a KR rate of 96.0%" not in txt
+    and "KR proportions were monotone in class rate but non-monotone in "
+        "baseline thickness (Supplementary Results)." in txt,
+    "Section 3.4")
+chk(sec, "Table 4 and Figure 2 keep their own column name",
+    "KR rate (%)" in txt and "class KR rate in %" in txt,
+    "Tables / figure legends")
 
 # ==================================================================== report ==
 out = []
