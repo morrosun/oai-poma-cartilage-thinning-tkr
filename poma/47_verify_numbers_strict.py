@@ -373,12 +373,9 @@ if remote:
     # Scripts added after the cited Zenodo release, pending the next archive.
     # They MUST be pushed before submission; this list is asserted separately so
     # an un-pushed script can never pass silently as "in the archive".
-    PENDING_PUSH = {
-        "52_lcmm_class_definition_check.R", "53_joint_fixed_sd_effect.R",
-        "54_clustering_sensitivity.R", "55_window_lag_sensitivity.R",
-        "55b_slope_reliability.R", "56_index_time_audit.R",
-        "57_pair_connectivity_cluster.R",
-    }
+    # Empty since 2026-10-24: 52-57 were pushed to main in cb88628.  The gate is
+    # kept so that the next round of new scripts cannot ship unannounced.
+    PENDING_PUSH = set()
     missing_repo = sorted(n for n in named
                           if n not in remote_base and n not in declared_absent
                           and n not in PENDING_PUSH)
