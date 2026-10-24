@@ -1568,6 +1568,45 @@ chk(sec, "Table 4 and Figure 2 keep their own column name",
     "KR rate (%)" in txt and "class KR rate in %" in txt,
     "Tables / figure legends")
 
+# ---------------------------------------------------------------- v28 -----
+# De-AI pass, prose only.  The tell that actually occurs here is the em dash
+# used as the universal connector; the ones left in the file are table
+# furniture (empty cells and sub-row ditto markers), which the check below
+# excludes by only looking at lines that are not table rows.
+sec = "v28 : de-AI pass, prose only"
+_prose = [ln for ln in txt.split("\n") if not ln.strip().startswith("|")]
+chk(sec, "no em dash in running prose",
+    all("\u2014" not in ln for ln in _prose),
+    "whole document")
+chk(sec, "the introduction states the three decisions directly",
+    "depends on three decisions usually left implicit" in txt
+    and "depends less on reproducibility than" not in txt,
+    "Introduction")
+chk(sec, "the three bold Result labels are sentences",
+    "**Result 1. A conditional-likelihood joint model for shared-index-visit "
+    "designs.**" in txt
+    and "**Result 2. Differential shrinkage must be tested, not assumed "
+    "away.**" in txt
+    and "**Result 3. A latent-class solution should not be read as a subtype "
+    "without these three tests.**" in txt
+    and "Result 1 \u2014" not in txt,
+    "Section 4.3")
+chk(sec, "the likelihood-ratio sentence uses a colon and while",
+    "agreed in both directions: adding rate to the level model improved fit"
+    in txt and "while adding level to the rate model did not" in txt,
+    "Section 3.2")
+chk(sec, "table labels use a colon, not a dash",
+    "| B3 Both entered together: continuous rate |" in txt
+    and "| cMFTC: central medial femorotibial (**weight-bearing**, "
+    "primary) |" in txt
+    and "Both entered together \u2014" not in txt
+    and "cMFTC \u2014 central" not in txt,
+    "Tables 3 and 5")
+chk(sec, "the Laplace proposal is in parentheses",
+    "a Laplace proposal (centred at the local posterior mode" in txt
+    and "Laplace proposal \u2014" not in txt,
+    "Supplementary Methods")
+
 # ==================================================================== report ==
 out = []
 out.append("=" * 74)
