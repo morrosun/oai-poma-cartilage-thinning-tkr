@@ -237,6 +237,13 @@ sampler:
 | v1.0.1 | [10.5281/zenodo.23111696](https://doi.org/10.5281/zenodo.23111696) | superseded — corrected sampler, but predates the two audit scripts, so it does not satisfy the full reproducibility inventory |
 | v1.0.0 | [10.5281/zenodo.22771313](https://doi.org/10.5281/zenodo.22771313) | superseded — **holds the uncorrected sampler and is not the source of the reported estimates** |
 
+**Status of `main`.** `main` carries the code used for the submitted manuscript, including
+`poma/52`–`57` and the corrected `simulation/12_sim_degeneracy.R` (the version whose Part A returns
+−100.187411 and a leading eigenvalue of 0.08063). Zenodo **v1.0.2 predates those changes**; cite
+v1.0.2 for the archived snapshot as of that release, or the concept DOI for whatever is latest.
+The next release (v1.0.3) will archive the current `main`, and the version-specific DOI will be
+updated here at that point.
+
 ---
 
 ## License / 许可
