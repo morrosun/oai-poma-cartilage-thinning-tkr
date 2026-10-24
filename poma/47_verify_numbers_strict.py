@@ -1469,6 +1469,17 @@ _readme = io.open(os.path.join(BASE, "..", "..",
 chk(sec, "the README carries the corrected leading eigenvalue",
     "0.08063" not in _readme and "leading eigenvalue of 0.0594" in _readme,
     "README status of main")
+# A reader who lands on the repository must be sent to the same release the
+# manuscript cites, otherwise the code and the paper disagree about the archive.
+chk(sec, "the README cites the same version DOI as the manuscript",
+    CITE in _readme and "(`v1.0.3`)" in _readme
+    and "**Cite v1.0.3, not v1.0.0, v1.0.1 or v1.0.2.**" in _readme
+    and "is archived as" in _readme,
+    "README citation block")
+chk(sec, "the README states why v1.0.2 is superseded",
+    "pre-correction implementation" in _readme
+    and "does not reproduce Table S3A" in _readme,
+    "README release table")
 
 # ============ v25 : the varied quantity is a common additive term, not a hazard
 sec = "v25 : Table S3A names the common additive event term"
