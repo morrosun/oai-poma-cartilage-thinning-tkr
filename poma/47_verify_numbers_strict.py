@@ -1431,6 +1431,44 @@ chk(sec, "the sampler overview states the paired-block update up front",
         "conditional-normal proposal" not in txt,
     "Section 2.5.2")
 
+# ================== v24 : A2 double-scaling correction in the public code ====
+sec = "v24 : the information matrix uses the raw thinning-rate difference"
+_rsim = io.open(os.path.join(BASE, "..", "..", "Scripts", "sim",
+                             "12_sim_degeneracy.R"), encoding="utf-8").read()
+# comment lines are hard-wrapped, so compare on a whitespace-flattened copy
+_rsim_flat = re.sub(r"\s+", " ", _rsim.replace("#", " "))
+chk(sec, "A2 regresses on the raw rate difference, not on the predictor",
+    "dltS  <- (rate[cs] - rate[js])[seq_len(S)]" in _rsim
+    and "rate  <- -d1$b1" in _rsim
+    and "dltS <- (eta_c - eta_j)[seq_len(S)]" not in _rsim,
+    "a is per mm/yr, so a = aS reproduces eta")
+chk(sec, "A2 asserts that aS x rate difference reproduces the predictor",
+    "stopifnot(max(abs(aS * dltS - (eta_c - eta_j)[seq_len(S)])) < 1e-10)"
+    in _rsim,
+    "guards against a future re-scaling")
+chk(sec, "the note declares the rate-only special case with a_V = 0",
+    "This check used the rate-only special case, with *a*_V = 0 and the "
+    "calibrated association coefficient multiplying the case-minus-control "
+    "thinning-rate difference." in txt,
+    "a_V = 0 stated in Table S3A")
+chk(sec, "the note quotes the re-exported leading eigenvalue",
+    "against a leading eigenvalue of %s" % f(_sa["max_abs_eigen"], 3) in txt,
+    "0.059 from the corrected Hessian")
+chk(sec, "the script no longer claims an improper posterior for any implementation",
+    "has an improper posterior" not in _rsim
+    and "the precise reason off-the-shelf joint-model software fails" not in _rsim
+    and "does not establish its identifiability in a full joint-model likelihood"
+        in _rsim_flat
+    and "statement about the posterior of any particular implementation"
+        in _rsim_flat,
+    "observation, not a causal claim")
+_readme = io.open(os.path.join(BASE, "..", "..",
+                               "oai-poma-cartilage-thinning-tkr", "README.md"),
+                  encoding="utf-8").read()
+chk(sec, "the README carries the corrected leading eigenvalue",
+    "0.08063" not in _readme and "leading eigenvalue of 0.0594" in _readme,
+    "README status of main")
+
 # ==================================================================== report ==
 out = []
 out.append("=" * 74)

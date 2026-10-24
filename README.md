@@ -141,17 +141,19 @@ case-versus-control visit-density asymmetry are those of the study rather than a
 evaluates the within-pair conditional event log-likelihood exactly as the fitted model defines it,
 `Σ_s log plogis(η_s)` over the 191 pairs, with `η_s` the case-minus-control linear predictor
 `a_V·(level at t*) + a_S·(slope)` (the script fixes `a_V = 0`, so `η_s = −a_S·b1_s`). The
-longitudinal submodel is not part of this sum; the value is therefore not an estimate of the
-likelihood of any fitted model, and only its invariance is used. Three baseline specifications are
+longitudinal submodel is not part of this sum; the value is therefore not the likelihood of a
+fitted joint model, and only its invariance is used. Three baseline specifications are
 compared at the index visit — baseline value set to zero, an arbitrary per-stratum value, and two
 structurally different baseline functions of time that agree at that visit — and all three return
 the same sum to machine precision. The information matrix is computed for one association
 coefficient plus twelve stratum baselines, each written as a three-coefficient function of time
-`(1, t, t²)` evaluated at the index visit; every baseline direction is null, which is why 36 of the
-37 eigenvalues are zero. Tolerance is `1e-5 ×` the largest absolute eigenvalue and the largest
-excluded direction is printed. A machine-readable copy of the panel (`sim1a_invariance.csv`) is
-written to the script's output directory on each run; like the other result files it is not
-distributed here.
+`(1, t, t²)` evaluated at the index visit; the association parameter is per mm/yr of thinning and
+multiplies the raw case-minus-control thinning-rate difference (not `η_s`, which already carries
+`a_S`), so the Hessian is evaluated at `a = a_S` and not at `a_S² × rate difference`. Every
+baseline direction is null, which is why 36 of the 37 eigenvalues are zero. Tolerance is
+`1e-5 ×` the largest absolute eigenvalue and the largest excluded direction is printed. A
+machine-readable copy of the panel (`sim1a_invariance.csv`) is written to the script's output
+directory on each run; like the other result files it is not distributed here.
 
 ### `cth_maps/` — companion trajectory / continuum analysis
 
@@ -239,7 +241,7 @@ sampler:
 
 **Status of `main`.** `main` carries the code used for the submitted manuscript, including
 `poma/52`–`57` and the corrected `simulation/12_sim_degeneracy.R` (the version whose Part A returns
-−100.187411 and a leading eigenvalue of 0.08063). Zenodo **v1.0.2 predates those changes**; cite
+−100.187411 and a leading eigenvalue of 0.0594). Zenodo **v1.0.2 predates those changes**; cite
 v1.0.2 for the archived snapshot as of that release, or the concept DOI for whatever is latest.
 The next release (v1.0.3) will archive the current `main`, and the version-specific DOI will be
 updated here at that point.

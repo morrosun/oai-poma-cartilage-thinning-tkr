@@ -14,12 +14,14 @@
 #     within-pair linear predictor of the model that is actually fitted.
 #
 #     The stratum-specific baseline hazard h_{0s}(t) enters numerator and
-#     denominator alike and cancels.  Hence h_{0s}(.) is not a parameter of the
-#     observed data at all: the log-likelihood is exactly invariant to it, the
-#     Fisher information with respect to it is the zero matrix, and any procedure
-#     that estimates it (e.g. a stratified joint model whose baseline is an
-#     M-spline basis per stratum) has an improper posterior.  That is the precise
-#     reason off-the-shelf joint-model software fails here.
+#     denominator alike and cancels.  Hence the log-likelihood is exactly
+#     invariant to the value of the baseline at the index visit and the Fisher
+#     information with respect to it is the zero matrix.  The stratum-specific
+#     baseline cancels from this CONDITIONAL EVENT likelihood.  That does not
+#     establish its identifiability in a full joint-model likelihood, and it does
+#     not by itself explain the implementation-specific failures recorded in the
+#     software probe (see 07, 12b and Supplementary Table S3E).  Nothing here is
+#     a statement about the posterior of any particular implementation.
 #
 #     v21 correction: this check previously multiplied aS (a coefficient per
 #     mm/yr of thinning) by the marker LEVEL at the index visit, giving |eta| up
@@ -29,6 +31,13 @@
 #     within-pair linear predictor, and the diagnostic lines report the number of
 #     pairs, the per-pair mean and the range of plogis(eta_case - eta_ctl) so
 #     that the magnitude of the total can be checked at a glance.
+#
+#     v24 correction: the A2 information matrix took dltS = eta_case - eta_ctl,
+#     which already contains aS, and then multiplied it by a again with the
+#     starting value a = aS, so the Hessian was evaluated at aS^2 * rate
+#     difference instead of aS * rate difference.  dltS is now the raw
+#     case-minus-control thinning-rate difference and a is the coefficient per
+#     mm/yr, so a = aS reproduces the generating predictor exactly.
 #
 #   Part B. Consequence for the paired contrast
 #     The same algebra shows what IS identified: only within-pair contrasts
@@ -119,11 +128,16 @@ stopifnot(abs(ll1 - ll0) < 1e-8, abs(ll2 - ll0) < 1e-8,
 ## coefficient never being used.  Stack (a, gamma_1..gamma_S) and require every
 ## gamma direction to be null.  S is kept small only to keep the numeric
 ## Hessian cheap -- the result is algebraic and does not depend on S.
+## `a` is the association coefficient per mm/yr of thinning, so the regressor is
+## the RAW case-minus-control thinning-rate difference (not eta, which already
+## carries aS).  At a = aS this reproduces the generating predictor exactly.
 ## Tolerance: 1e-5 x largest absolute eigenvalue, five orders of magnitude above
 ## the rounding level of the finite-difference Hessian; the largest direction it
 ## excludes is printed so the gap is visible.
 S <- 12; K <- 3
-dltS <- (eta_c - eta_j)[seq_len(S)]
+rate  <- -d1$b1                                     # thinning rate, mm/yr
+dltS  <- (rate[cs] - rate[js])[seq_len(S)]           # raw within-pair difference
+stopifnot(max(abs(aS * dltS - (eta_c - eta_j)[seq_len(S)])) < 1e-10)
 tsS  <- d1$tstar[cs][seq_len(S)]                    # index visit of each stratum
 BAS  <- cbind(1, tsS / 12, (tsS / 12)^2)            # baseline basis in time
 mk_ll <- function(par) {
