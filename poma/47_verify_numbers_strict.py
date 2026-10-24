@@ -423,16 +423,17 @@ if remote:
         chk(sec, "compare against the local clone", False, "ERROR %s" % str(e)[:100])
 
 # ============================================================== 8. DOI -------
-# The cited archive must be the one that holds BOTH the corrected sampler and
-# the complete S2 inventory.  Superseded DOIs may appear, but only when they are
-# explicitly labelled as superseded -- a bare older DOI is how a reader ends up
-# reproducing the wrong numbers.
+# The cited archive must be the one that holds the corrected sampler, the
+# complete S2 inventory AND the corrected simulation / figure scripts.  Superseded
+# DOIs may appear, but only when they are explicitly labelled as superseded -- a
+# bare older DOI is how a reader ends up reproducing the wrong numbers.
 sec = "DOI : points at the archive holding the corrected sampler"
-CITE = "10.5281/zenodo.23111986"      # v1.0.2 -- corrected sampler + 46/47
-chk(sec, "cited version DOI is %s (v1.0.2)" % CITE, has(CITE, sec, "cited DOI"))
-chk(sec, "cited release is named as v1.0.2", has("release v1.0.2", sec, "release label"))
+CITE = "10.5281/zenodo.23615677"      # v1.0.3 -- + simulation and figure corrections
+chk(sec, "cited version DOI is %s (v1.0.3)" % CITE, has(CITE, sec, "cited DOI"))
+chk(sec, "cited release is named as v1.0.3", has("release v1.0.3", sec, "release label"))
 chk(sec, "concept DOI 22771312 unchanged", has("10.5281/zenodo.22771312", sec, "concept DOI"))
-for old, why in (("10.5281/zenodo.23111696", "v1.0.1 has the sampler but a pre-audit inventory"),
+for old, why in (("10.5281/zenodo.23111986", "v1.0.2 has the sampler and the audit but a pre-correction simulation and pre-fix figures"),
+                 ("10.5281/zenodo.23111696", "v1.0.1 has the sampler but a pre-audit inventory"),
                  ("10.5281/zenodo.22771313", "v1.0.0 has the uncorrected sampler")):
     n = txt.count(old)
     # A superseded DOI may legitimately appear more than once -- the version
