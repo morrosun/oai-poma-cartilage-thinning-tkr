@@ -224,29 +224,29 @@ The analysis code is archived at Zenodo:
 
 | | |
 |---|---|
-| **Version-specific DOI — cite this one** | <https://doi.org/10.5281/zenodo.23111986> (`v1.0.2`) |
+| **Version-specific DOI — cite this one** | <https://doi.org/10.5281/zenodo.23615677> (`v1.0.3`) |
 | Concept DOI — always resolves to the latest version | <https://doi.org/10.5281/zenodo.22771312> |
 
 ```
 Wang K. Cartilage thinning rate and knee replacement in the OAI POMA nested case-control:
-analysis code (v1.0.2). Zenodo. https://doi.org/10.5281/zenodo.23111986
+analysis code (v1.0.3). Zenodo. https://doi.org/10.5281/zenodo.23615677
 ```
 
-**Cite v1.0.2, not v1.0.0 or v1.0.1.** The reported estimates come from the corrected
+**Cite v1.0.3, not v1.0.0, v1.0.1 or v1.0.2.** The reported estimates come from the corrected
 sampler:
 
 | Release | DOI | Status |
 |---|---|---|
-| v1.0.2 | [10.5281/zenodo.23111986](https://doi.org/10.5281/zenodo.23111986) | **cite this one** — corrected sampler plus the audit scripts that verify every quoted number |
+| v1.0.3 | [10.5281/zenodo.23615677](https://doi.org/10.5281/zenodo.23615677) | **cite this one** — corrected sampler, the audit scripts that verify every quoted number, and the simulation and figure scripts behind Table S3A and Supplementary Figure S3 |
+| v1.0.2 | [10.5281/zenodo.23111986](https://doi.org/10.5281/zenodo.23111986) | superseded — corrected sampler and audit scripts, but its `simulation/12_sim_degeneracy.R` is the pre-correction implementation (Part A returns −1223.075, leading eigenvalue 0.08063), so it does not reproduce Table S3A |
 | v1.0.1 | [10.5281/zenodo.23111696](https://doi.org/10.5281/zenodo.23111696) | superseded — corrected sampler, but predates the two audit scripts, so it does not satisfy the full reproducibility inventory |
 | v1.0.0 | [10.5281/zenodo.22771313](https://doi.org/10.5281/zenodo.22771313) | superseded — **holds the uncorrected sampler and is not the source of the reported estimates** |
 
-**Status of `main`.** `main` carries the code used for the submitted manuscript, including
-`poma/52`–`57` and the corrected `simulation/12_sim_degeneracy.R` (the version whose Part A returns
-−100.187411 and a leading eigenvalue of 0.0594). Zenodo **v1.0.2 predates those changes**; cite
-v1.0.2 for the archived snapshot as of that release, or the concept DOI for whatever is latest.
-The next release (v1.0.3) will archive the current `main`, and the version-specific DOI will be
-updated here at that point.
+**Status of `main`.** `main` is the code used for the submitted manuscript and is archived as
+**v1.0.3**: `poma/52`–`57`, the corrected `simulation/12_sim_degeneracy.R` (the version whose Part A
+returns −100.187411 and a leading eigenvalue of 0.0594), and the two figure scripts that no
+longer refit anything the manuscript quotes. Cite the version DOI above, or the concept DOI for
+whatever is latest.
 
 ---
 
