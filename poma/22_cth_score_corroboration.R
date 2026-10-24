@@ -87,12 +87,30 @@ slope_of <- function(dat, tag) {
   out
 }
 
-## pre-index only = PRIMARY (visits at or before the matched index visit)
-P <- slope_of(LONG[LONG$pre_index == 1, ], "pre")
+## ------------------------------------------------------- time rule (revised)
+## REVISED 2026-10-24 after audit 56_index_time_audit.R.
+##   The ORIGINAL rule used `pre_index`, i.e. t <= idx_yr ("at or before the
+##   matched index visit").  That admitted the index-visit measurement of 120
+##   knees, and every one of those 120 was a CONTROL.  Replacement knees stop
+##   contributing MRI after surgery while their matched controls keep
+##   attending, so the inclusive rule built the exposure window from one extra
+##   measurement that existed only on the control side of 120 pairs.
+##   The primary rule is now STRICTLY BEFORE the index visit (t < idx_yr).
+##   It keeps the same 148 complete pairs and additionally balances visit
+##   density (3.28 vs 3.20 measured visits per knee).  The inclusive set is
+##   retained as a labelled sensitivity object so the size of the change is on
+##   the record rather than buried in a revision note.
+pre_strict  <- LONG$t <  LONG$idx_yr
+pre_incl    <- LONG$pre_index == 1
+
+## pre-index only, STRICTLY BEFORE the index visit = PRIMARY
+P <- slope_of(LONG[pre_strict, ], "pre")
+## the superseded inclusive rule, for the audit table only
+Pi <- slope_of(LONG[pre_incl, ], "preinc")
 ## all available CTh timepoints = SENSITIVITY ONLY (may include post-outcome visits)
 A <- slope_of(LONG, "all")
 
-k <- merge(A, P, by = "unit", all = TRUE)
+k <- merge(merge(A, P, by = "unit", all = TRUE), Pi, by = "unit", all = TRUE)
 u <- merge(BAS, k, by = "unit", all.y = FALSE)
 cat(sprintf("POMA knees with CTh slope : %d of %d (pre-index PRIMARY %d, all-tp %d)\n",
             nrow(u), nrow(BAS), sum(!is.na(u$ols_pre)), sum(!is.na(u$ols_all))))
@@ -120,7 +138,8 @@ cl <- function(dat, form) {
              n_pairs = length(unique(dat$newstrata)), n = nrow(dat),
              stringsAsFactors = FALSE)
 }
-PA$z_cth_pre   <- zs(PA$ols_pre)        # PRIMARY
+PA$z_cth_pre   <- zs(PA$ols_pre)        # PRIMARY, strictly before index
+PA$z_cth_preinc<- zs(PA$ols_preinc)     # superseded inclusive rule (audit only)
 PA$z_cth_pre_e <- zs(PA$eblup_pre)      # PRIMARY, shrunken
 PA$z_base_pre  <- zs(PA$base_pre)
 PA$z_cth_all   <- zs(PA$ols_all)        # SENSITIVITY
@@ -137,8 +156,9 @@ PA$z_cmbase   <- zs(PA[["cMFTC_ThCtAB_aMe__base"]])
 models <- list(
   "A1  cMFTC slope alone (kmri, reference)"          = "z_cmftc",
   "A2  cMFTC slope, unshrunk OLS"                    = "z_cmftc_o",
-  "B1  CTh-Score slope, PRE-INDEX, OLS   [primary]"  = "z_cth_pre",
-  "B2  CTh-Score slope, PRE-INDEX, EBLUP [primary]"  = "z_cth_pre_e",
+  "B1  CTh-Score slope, STRICTLY PRE-INDEX, OLS   [primary]"  = "z_cth_pre",
+  "B2  CTh-Score slope, STRICTLY PRE-INDEX, EBLUP [primary]"  = "z_cth_pre_e",
+  "B0  CTh-Score slope, INCLUSIVE rule [superseded]"          = "z_cth_preinc",
   "B3  CTh-Score slope + baseline (pre-index)"       = "z_cth_pre + z_base_pre",
   "C1  both metrics, mutual adjustment (pre-index)"  = "z_cth_pre + z_cmftc",
   "C2  both metrics + both baselines (pre-index)"    = "z_cth_pre + z_base_pre + z_cmftc + z_cmbase",
@@ -157,9 +177,11 @@ cat("\n==== Q1 within-pair conditional logistic (outcome = knee replacement) ===
 cat("     OR > 1 = faster CTh-Score progression (or thinner cMFTC) -> TKR\n")
 cat("     A1/A2 cMFTC rows are OR < 1 because z_cmftc is minus the thinning slope\n")
 print(res, row.names = FALSE, digits = 4)
-cat("\n---- headline (PRE-INDEX, primary) ----\n")
-for (lab in c("B1  CTh-Score slope, PRE-INDEX, OLS   [primary]",
-              "B2  CTh-Score slope, PRE-INDEX, EBLUP [primary]")) {
+cat("\n---- headline (STRICTLY PRE-INDEX, primary) ----\n")
+cat("     vs B0, the superseded inclusive rule that admitted the index visit\n")
+for (lab in c("B1  CTh-Score slope, STRICTLY PRE-INDEX, OLS   [primary]",
+              "B2  CTh-Score slope, STRICTLY PRE-INDEX, EBLUP [primary]",
+              "B0  CTh-Score slope, INCLUSIVE rule [superseded]")) {
   rr <- res[res$model == lab, ]
   cat(sprintf("  %-48s OR %5.3f (%5.3f-%5.3f)  p = %.3g\n",
               lab, rr$OR[1], rr$lo[1], rr$hi[1], rr$p[1]))
@@ -219,11 +241,15 @@ cat("  tertile cross-tabulation (rows = CTh-Score, cols = cMFTC thinning):\n"); 
 agr <- sum(diag(tt)) / sum(tt)
 cat(sprintf("  same tertile (diagonal) %.1f%% ; extreme-vs-extreme disagreement %.1f%%\n",
             100 * agr, 100 * (tt[1, 3] + tt[3, 1]) / sum(tt)))
+## the extreme-vs-extreme discordance was printed but never stored, so the
+## manuscript value had no on-disk source; it is written here.
+ext <- 100 * (tt[1, 3] + tt[3, 1]) / sum(tt)
 conc <- data.frame(metric = c("Pearson_pre", "Spearman_pre", "Pearson_EBLUP_pre",
                               "Pearson_alltp_SENS",
-                              "BA_mean_diff", "BA_sd", "tertile_agreement_pct", "n"),
+                              "BA_mean_diff", "BA_sd", "tertile_agreement_pct",
+                              "extreme_discordance_pct", "n"),
                    value = c(r_p, r_s, r_pe, r_p_all,
-                             mean(dif), sd(dif), 100 * agr, nrow(cc)))
+                             mean(dif), sd(dif), 100 * agr, ext, nrow(cc)))
 write.csv(conc, file.path(BASE, "cth_concordance.csv"), row.names = FALSE)
 
 ## ------------------------------------------------- Q3 : differential shrinkage
@@ -327,8 +353,8 @@ pick <- function(lab) {
   if (!length(i)) i <- which(res$model == lab)[1]
   i[1]
 }
-iB1 <- pick("B1  CTh-Score slope, PRE-INDEX, OLS   [primary]")
-iB2 <- pick("B2  CTh-Score slope, PRE-INDEX, EBLUP [primary]")
+iB1 <- pick("B1  CTh-Score slope, STRICTLY PRE-INDEX, OLS   [primary]")
+iB2 <- pick("B2  CTh-Score slope, STRICTLY PRE-INDEX, EBLUP [primary]")
 iS2 <- pick("S2  SENS CTh-Score slope, ALL TIMEPOINTS")
 iA1 <- pick("A1  cMFTC slope alone (kmri, reference)")
 g3 <- data.frame(term = c("CTh-Score slope, PRE-INDEX (primary)",

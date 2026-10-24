@@ -32,8 +32,12 @@ regenerate from the source data under its own data-use agreement (see *Data avai
 
 The identical index visit is what makes a within-pair conditional likelihood attractive: the
 baseline hazard and every within-pair-constant term cancel, so only within-pair contrasts are
-identified. It is also what makes a stratified joint model with pair-constant covariates
-rank-deficient — see `simulation/12b_sim_jmbayes2_probe.R`.
+identified. It is also the setting in which the stratified `JMbayes2` specification that we tested
+failed at initialisation when within-pair-constant covariates were included, whereas the
+specifications without them did not (`simulation/12b_sim_jmbayes2_probe.R`, Supplementary Table S3E
+of the manuscript). The cancellation of the baseline hazard in the conditional likelihood does not
+by itself establish the cause of that failure in a full joint-model likelihood, and the scripts here
+do not claim more than the observation.
 
 ---
 
@@ -67,13 +71,13 @@ cth_maps/      # companion trajectory / continuum analysis of the CTh-Maps relea
 | `04_shrinkage_moments.py` | Moment cross-check of the EB shrinkage, decomposing Var(OLS slope) into true-slope variance plus estimation variance |
 | `05_merge_baseline_covariates.py` | Merge age, sex, BMI, WOMAC pain, PASE and KL grade onto the knee-level table (≥98% coverage required) |
 | `06_clogit_adjusted.R` | Within-pair conditional logistic regression over the M0–M7 adjustment ladder |
-| `07_probe_jmbayes2.R` | Records the off-the-shelf failure mode (`JMbayes2` → `chol(): decomposition failed`) |
+| `07_probe_jmbayes2.R` | Runs the off-the-shelf `JMbayes2` specification for this design and records what was observed; the probe itself is `12b` and the reading is in Supplementary Table S3E |
 | `08_joint_model.R` | Stratified `JMbayes2` fit, retained as the comparator |
 | `jm_core.R` | Shared sampler: longitudinal submodel, within-pair conditional likelihood |
 | `jm_core_legacy_sampler.R` | **Deliberately retained pre-audit version of the sampler**, kept only so that the audit scripts (`40`, `41`, `43`) can run it side by side with `jm_core.R`. Do not use for new work — see *Sampler audit*. |
 | `09_joint_conditional.R` | The joint model under the within-pair conditional likelihood |
 | `10_jm_multimetric.R` | Compartment-by-compartment joint models for the six cartilage metrics |
-| `10b_gradient_test.R` | The three formal medial-to-lateral contrasts, computed on one posterior draw set |
+| `10b_gradient_test.R` | The three formal medial-to-lateral contrasts: two bivariate conditional-logistic coefficient differences (a rate contrast and a composite-score contrast) and the joint-model association of the within-knee regional difference |
 | `10c_clogit_seq_primary.R` | Progressive covariate adjustment for the pre-specified primary metric |
 | `10d_verify_lme_primary.R` | Verifies the longitudinal submodel against an independent `nlme::lme` fit |
 | `10e_minvisits_primary.R` | Refits both models requiring both knees to have ≥J visits (J = 2, 3, 4) |
@@ -130,6 +134,24 @@ case-versus-control visit-density asymmetry are those of the study rather than a
 | `12b_sim_jmbayes2_probe.R` | Controlled grid isolating the model specification under which the stratified joint model fails |
 | `13_sim_shrinkage.R` | Null, primary and truncated-visit scenarios comparing EBLUP with unshrunk slopes |
 | `14_sim_continuum.R` | Applies the primary latent-class pipeline to data generated from a single continuous distribution |
+
+#### What panel (A) of Supplementary Table S3 is computed from
+
+`12_sim_degeneracy.R` Part A draws one data set with the calibrated generating parameters and
+evaluates the within-pair conditional event log-likelihood exactly as the fitted model defines it,
+`Σ_s log plogis(η_s)` over the 191 pairs, with `η_s` the case-minus-control linear predictor
+`a_V·(level at t*) + a_S·(slope)` (the script fixes `a_V = 0`, so `η_s = −a_S·b1_s`). The
+longitudinal submodel is not part of this sum; the value is therefore not an estimate of the
+likelihood of any fitted model, and only its invariance is used. Three baseline specifications are
+compared at the index visit — baseline value set to zero, an arbitrary per-stratum value, and two
+structurally different baseline functions of time that agree at that visit — and all three return
+the same sum to machine precision. The information matrix is computed for one association
+coefficient plus twelve stratum baselines, each written as a three-coefficient function of time
+`(1, t, t²)` evaluated at the index visit; every baseline direction is null, which is why 36 of the
+37 eigenvalues are zero. Tolerance is `1e-5 ×` the largest absolute eigenvalue and the largest
+excluded direction is printed. A machine-readable copy of the panel (`sim1a_invariance.csv`) is
+written to the script's output directory on each run; like the other result files it is not
+distributed here.
 
 ### `cth_maps/` — companion trajectory / continuum analysis
 
